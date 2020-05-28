@@ -94,7 +94,7 @@
 
 (require 'cl-generic)
 
-(defvar project-find-functions (list #'project-try-vc)
+(defvar project-find-functions (list #'project-try-plain #'project-try-vc)
   "Special hook to find the project containing a given directory.
 Each functions on this hook is called in turn with one
 argument (the directory) and should return either nil to mean
@@ -193,6 +193,18 @@ to find the list of ignores for each directory."
                                   (project--dir-ignores project dir)))
    (or dirs
        (list (project-root project)))))
+
+(defun project-try-plain (dir)
+  "Return the plain project instance of current DIR.
+
+A directory with magic file \".emacs-project\" will be recognized as
+plain project."
+  (pcase (locate-dominating-file dir ".emacs-project")
+    (`nil nil)
+    (root (cons 'plain root))))
+
+(cl-defmethod project-root ((project (head plain)))
+  (cdr project))
 
 (defun project--files-in-directory (dir ignores &optional files)
   (require 'find-dired)
